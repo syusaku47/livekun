@@ -6,6 +6,7 @@ import { SetlistItem } from './entities/setlist-item.entity';
 import { NearbyFacility } from './entities/nearby-facility.entity';
 import { Photo } from './entities/photo.entity';
 import { CreateLiveDto } from './dto/create-live.dto';
+import { S3Service } from './s3.service';
 
 @Injectable()
 export class LivesService {
@@ -18,6 +19,7 @@ export class LivesService {
     private readonly facilityRepo: Repository<NearbyFacility>,
     @InjectRepository(Photo)
     private readonly photoRepo: Repository<Photo>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async findAll(): Promise<Live[]> {
@@ -105,6 +107,24 @@ export class LivesService {
     files: Express.Multer.File[],
   ): Promise<Photo[]> {
     const live = await this.findOne(id);
+
+    if (this.s3Service.isEnabled) {
+      const photos = await Promise.all(
+        files.map(async (file) => {
+          const { key, url } = await this.s3Service.uploadFile(file);
+          return this.photoRepo.create({
+            filename: file.originalname,
+            path: url,
+            mimetype: file.mimetype,
+            size: file.size,
+            live,
+          });
+        }),
+      );
+      return this.photoRepo.save(photos);
+    }
+
+    // Local storage fallback
     const photos = files.map((file) =>
       this.photoRepo.create({
         filename: file.filename,

@@ -11,11 +11,25 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
 import { LivesService } from './lives.service';
 import { CreateLiveDto } from './dto/create-live.dto';
+
+const useS3 = !!process.env.S3_BUCKET;
+
+const storageConfig = useS3
+  ? { storage: memoryStorage() }
+  : {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, cb) => {
+          const ext = extname(file.originalname);
+          cb(null, `${uuidv4()}${ext}`);
+        },
+      }),
+    };
 
 @Controller('api/lives')
 export class LivesController {
@@ -52,13 +66,7 @@ export class LivesController {
   @Post(':id/photos')
   @UseInterceptors(
     FilesInterceptor('photos', 100, {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const ext = extname(file.originalname);
-          cb(null, `${uuidv4()}${ext}`);
-        },
-      }),
+      ...storageConfig,
       limits: { fileSize: 100 * 1024 * 1024 },
     }),
   )
