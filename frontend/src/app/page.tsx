@@ -9,9 +9,7 @@ export default function Home() {
   const [records, setRecords] = useState<LiveRecord[]>([]);
 
   useEffect(() => {
-    setRecords(getLiveRecords().sort((a, b) =>
-      b.performanceDate.localeCompare(a.performanceDate)
-    ));
+    getLiveRecords().then(setRecords);
   }, []);
 
   return (

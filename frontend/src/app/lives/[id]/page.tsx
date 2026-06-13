@@ -13,16 +13,15 @@ export default function LiveDetailPage() {
 
   useEffect(() => {
     const id = params.id as string;
-    const data = getLiveRecord(id);
-    if (data) {
-      setRecord(data);
-    }
+    getLiveRecord(id).then((data) => {
+      if (data) setRecord(data);
+    });
   }, [params.id]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!record) return;
     if (confirm("この記録を削除しますか？")) {
-      deleteLiveRecord(record.id);
+      await deleteLiveRecord(record.id);
       router.push("/");
     }
   };
@@ -116,11 +115,11 @@ export default function LiveDetailPage() {
             写真（{record.photos.length}枚）
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {record.photos.map((photo, i) => (
+            {record.photos.map((photo) => (
               <img
-                key={i}
-                src={photo}
-                alt={`写真${i + 1}`}
+                key={photo.id}
+                src={photo.path.startsWith("http") ? photo.path : `/uploads/${photo.filename}`}
+                alt={photo.filename}
                 className="w-full h-40 object-cover rounded-lg"
               />
             ))}

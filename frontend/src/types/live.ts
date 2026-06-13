@@ -10,6 +10,14 @@ export interface NearbyFacility {
   memo: string;
 }
 
+export interface Photo {
+  id: string;
+  filename: string;
+  path: string;
+  mimetype: string;
+  size: number;
+}
+
 export interface LiveRecord {
   id: string;
   artistName: string;
@@ -18,7 +26,7 @@ export interface LiveRecord {
   tourName: string;
   startTime: string;
   endTime: string;
-  photos: string[];
+  photos: Photo[];
   nearbyFacilities: NearbyFacility[];
   googleMapUrl: string;
   impression: string;

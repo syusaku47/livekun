@@ -30,6 +30,8 @@ services:
       DB_PASSWORD: livekun
       DB_NAME: livekun
       NODE_ENV: production
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,3 +51,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

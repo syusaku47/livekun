@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LiveRecord, SetlistItem, NearbyFacility } from "@/types/live";
-import { saveLiveRecord } from "@/lib/storage";
+import { SetlistItem, NearbyFacility } from "@/types/live";
+import { createLiveRecord } from "@/lib/storage";
 
 export default function NewLivePage() {
   const router = useRouter();
@@ -15,36 +15,41 @@ export default function NewLivePage() {
   const [endTime, setEndTime] = useState("");
   const [googleMapUrl, setGoogleMapUrl] = useState("");
   const [impression, setImpression] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [setlist, setSetlist] = useState<SetlistItem[]>([
     { order: 1, title: "", type: "song" },
   ]);
   const [facilities, setFacilities] = useState<NearbyFacility[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const maxFiles = 100 - photos.length;
+    const maxFiles = 100 - photoFiles.length;
     const filesToProcess = Array.from(files).slice(0, maxFiles);
+
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
 
     filesToProcess.forEach((file) => {
       if (file.size > 100 * 1024 * 1024) {
         alert(`${file.name} は100MBを超えています`);
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          setPhotos((prev) => [...prev, ev.target!.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
+      newFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
     });
+
+    setPhotoFiles((prev) => [...prev, ...newFiles]);
+    setPhotoPreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addSetlistItem = (type: "song" | "mc" | "encore") => {
@@ -89,7 +94,7 @@ export default function NewLivePage() {
     setFacilities((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!artistName || !performanceDate || !venueName) {
@@ -97,26 +102,28 @@ export default function NewLivePage() {
       return;
     }
 
-    const now = new Date().toISOString();
-    const record: LiveRecord = {
-      id: crypto.randomUUID?.() ?? Math.random().toString(36).substring(2) + Date.now().toString(36),
-      artistName,
-      performanceDate,
-      venueName,
-      tourName,
-      startTime,
-      endTime,
-      photos,
-      nearbyFacilities: facilities,
-      googleMapUrl,
-      impression,
-      setlist: setlist.filter((s) => s.title.trim() !== ""),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    saveLiveRecord(record);
-    router.push(`/lives/${record.id}`);
+    setSaving(true);
+    try {
+      const record = await createLiveRecord(
+        {
+          artistName,
+          performanceDate,
+          venueName,
+          tourName,
+          startTime,
+          endTime,
+          googleMapUrl,
+          impression,
+          setlist: setlist.filter((s) => s.title.trim() !== ""),
+          nearbyFacilities: facilities,
+        },
+        photoFiles
+      );
+      router.push(`/lives/${record.id}`);
+    } catch {
+      alert("保存に失敗しました");
+      setSaving(false);
+    }
   };
 
   const setlistTypeLabel = (type: string) => {
@@ -127,17 +134,6 @@ export default function NewLivePage() {
         return "アンコール";
       default:
         return "曲";
-    }
-  };
-
-  const facilityLabel = (cat: string) => {
-    switch (cat) {
-      case "izakaya":
-        return "居酒屋";
-      case "cafe":
-        return "カフェ";
-      default:
-        return "その他";
     }
   };
 
@@ -186,7 +182,7 @@ export default function NewLivePage() {
                   type="date"
                   value={performanceDate}
                   onChange={(e) => setPerformanceDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   required
                 />
               </div>
@@ -198,7 +194,7 @@ export default function NewLivePage() {
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
               <div>
@@ -209,7 +205,7 @@ export default function NewLivePage() {
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
             </div>
@@ -221,7 +217,7 @@ export default function NewLivePage() {
                 type="text"
                 value={venueName}
                 onChange={(e) => setVenueName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="例: 東京ドーム"
                 required
               />
@@ -234,7 +230,7 @@ export default function NewLivePage() {
                 type="url"
                 value={googleMapUrl}
                 onChange={(e) => setGoogleMapUrl(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="https://maps.google.com/..."
               />
             </div>
@@ -253,12 +249,12 @@ export default function NewLivePage() {
             onChange={handlePhotoUpload}
             className="mb-4"
           />
-          {photos.length > 0 && (
+          {photoPreviews.length > 0 && (
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-              {photos.map((photo, i) => (
+              {photoPreviews.map((preview, i) => (
                 <div key={i} className="relative group">
                   <img
-                    src={photo}
+                    src={preview}
                     alt={`写真${i + 1}`}
                     className="w-full h-24 object-cover rounded-lg"
                   />
@@ -274,7 +270,7 @@ export default function NewLivePage() {
             </div>
           )}
           <p className="text-sm text-gray-400 mt-2">
-            {photos.length}/100 枚アップロード済み
+            {photoFiles.length}/100 枚選択済み
           </p>
         </section>
 
@@ -294,7 +290,7 @@ export default function NewLivePage() {
                   type="text"
                   value={item.title}
                   onChange={(e) => updateSetlistItem(i, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder={
                     item.type === "mc" ? "MCの内容" : "曲名を入力"
                   }
@@ -348,7 +344,7 @@ export default function NewLivePage() {
                   onChange={(e) =>
                     updateFacility(i, "category", e.target.value)
                   }
-                  className="border border-gray-300 rounded-lg px-2 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900"
                 >
                   <option value="izakaya">居酒屋</option>
                   <option value="cafe">カフェ</option>
@@ -358,14 +354,14 @@ export default function NewLivePage() {
                   type="text"
                   value={f.name}
                   onChange={(e) => updateFacility(i, "name", e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                   placeholder="店名"
                 />
                 <input
                   type="text"
                   value={f.memo}
                   onChange={(e) => updateFacility(i, "memo", e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                   placeholder="メモ（おすすめポイントなど）"
                 />
                 <button
@@ -394,7 +390,7 @@ export default function NewLivePage() {
             value={impression}
             onChange={(e) => setImpression(e.target.value)}
             rows={6}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder="ライブの感想を自由に書いてください..."
           />
         </section>
@@ -410,9 +406,10 @@ export default function NewLivePage() {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-800 transition-colors"
+            disabled={saving}
+            className="px-6 py-3 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-800 transition-colors disabled:opacity-50"
           >
-            記録を保存
+            {saving ? "保存中..." : "記録を保存"}
           </button>
         </div>
       </form>
