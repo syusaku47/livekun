@@ -202,6 +202,12 @@ export default function LiveDetailPage() {
 
       {/* アクション */}
       <div className="flex justify-end gap-3 mb-10">
+        <Link
+          href={`/lives/${record.id}/edit`}
+          className="px-4 py-2 rounded-lg border border-purple-300 text-purple-600 hover:bg-purple-50 transition-colors text-sm"
+        >
+          編集する
+        </Link>
         <button
           onClick={handleDelete}
           className="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors text-sm"

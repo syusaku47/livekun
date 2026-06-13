@@ -55,6 +55,46 @@ export async function createLiveRecord(
   return record;
 }
 
+export async function updateLiveRecord(
+  id: string,
+  data: {
+    artistName: string;
+    performanceDate: string;
+    venueName: string;
+    tourName?: string;
+    startTime?: string;
+    endTime?: string;
+    googleMapUrl?: string;
+    impression?: string;
+    setlist?: { order: number; title: string; type: string }[];
+    nearbyFacilities?: {
+      name: string;
+      category: string;
+      memo?: string;
+    }[];
+  },
+  newPhotoFiles: File[]
+): Promise<LiveRecord> {
+  const res = await fetch(`${API_BASE}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update record");
+  const record: LiveRecord = await res.json();
+
+  if (newPhotoFiles.length > 0) {
+    const formData = new FormData();
+    newPhotoFiles.forEach((file) => formData.append("photos", file));
+    await fetch(`${API_BASE}/${record.id}/photos`, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  return record;
+}
+
 export async function deleteLiveRecord(id: string): Promise<void> {
   await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
 }
