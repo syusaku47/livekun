@@ -19,6 +19,7 @@ RUN adduser --system --uid 1001 nestjs
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
+RUN mkdir -p ./uploads && chown nestjs:nestjs ./uploads
 USER nestjs
 EXPOSE 3001
 CMD ["node", "dist/main"]
