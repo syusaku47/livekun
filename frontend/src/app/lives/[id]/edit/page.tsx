@@ -26,26 +26,35 @@ export default function EditLivePage() {
 
   useEffect(() => {
     const id = params.id as string;
-    getLiveRecord(id).then((record) => {
-      if (!record) return;
-      setArtistName(record.artistName);
-      setPerformanceDate(record.performanceDate);
-      setVenueName(record.venueName);
-      setTourName(record.tourName || "");
-      setStartTime(record.startTime || "");
-      setEndTime(record.endTime || "");
-      setGoogleMapUrl(record.googleMapUrl || "");
-      setImpression(record.impression || "");
-      setExistingPhotos(record.photos);
-      setSetlist(
-        record.setlist.length > 0
-          ? record.setlist
-          : [{ order: 1, title: "", type: "song" }]
-      );
-      setFacilities(record.nearbyFacilities);
-      setLoading(false);
-    });
-  }, [params.id]);
+    getLiveRecord(id)
+      .then((record) => {
+        if (!record) {
+          alert("記録が見つかりません");
+          router.push("/");
+          return;
+        }
+        setArtistName(record.artistName);
+        setPerformanceDate(record.performanceDate);
+        setVenueName(record.venueName);
+        setTourName(record.tourName || "");
+        setStartTime(record.startTime || "");
+        setEndTime(record.endTime || "");
+        setGoogleMapUrl(record.googleMapUrl || "");
+        setImpression(record.impression || "");
+        setExistingPhotos(record.photos);
+        setSetlist(
+          record.setlist.length > 0
+            ? record.setlist
+            : [{ order: 1, title: "", type: "song" }]
+        );
+        setFacilities(record.nearbyFacilities);
+        setLoading(false);
+      })
+      .catch((err) => {
+        alert(`データ取得エラー: ${err.message}`);
+        setLoading(false);
+      });
+  }, [params.id, router]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -147,8 +156,8 @@ export default function EditLivePage() {
         newPhotoFiles
       );
       router.push(`/lives/${id}`);
-    } catch {
-      alert("保存に失敗しました");
+    } catch (err) {
+      alert(`保存に失敗しました: ${err instanceof Error ? err.message : String(err)}`);
       setSaving(false);
     }
   };

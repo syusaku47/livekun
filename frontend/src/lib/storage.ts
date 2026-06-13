@@ -40,7 +40,10 @@ export async function createLiveRecord(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create record");
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to create record: ${res.status} ${body}`);
+  }
   const record: LiveRecord = await res.json();
 
   if (photoFiles.length > 0) {
@@ -80,7 +83,10 @@ export async function updateLiveRecord(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update record");
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to update record: ${res.status} ${body}`);
+  }
   const record: LiveRecord = await res.json();
 
   if (newPhotoFiles.length > 0) {

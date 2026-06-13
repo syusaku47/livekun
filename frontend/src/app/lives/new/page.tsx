@@ -120,8 +120,8 @@ export default function NewLivePage() {
         photoFiles
       );
       router.push(`/lives/${record.id}`);
-    } catch {
-      alert("保存に失敗しました");
+    } catch (err) {
+      alert(`保存に失敗しました: ${err instanceof Error ? err.message : String(err)}`);
       setSaving(false);
     }
   };
