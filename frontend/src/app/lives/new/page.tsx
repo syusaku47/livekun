@@ -99,7 +99,7 @@ export default function NewLivePage() {
 
     const now = new Date().toISOString();
     const record: LiveRecord = {
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID?.() ?? Math.random().toString(36).substring(2) + Date.now().toString(36),
       artistName,
       performanceDate,
       venueName,
