@@ -9,7 +9,9 @@ import {
   UseInterceptors,
   UploadedFiles,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage, memoryStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,6 +34,7 @@ const storageConfig = useS3
     };
 
 @Controller('api/lives')
+@UseGuards(JwtAuthGuard)
 export class LivesController {
   constructor(private readonly livesService: LivesService) {}
 

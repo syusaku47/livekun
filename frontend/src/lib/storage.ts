@@ -1,9 +1,22 @@
 import { LiveRecord } from "@/types/live";
+import { authHeaders, removeToken } from "@/lib/auth";
 
 const API_BASE = "/api/lives";
 
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const res = await fetch(url, {
+    ...options,
+    headers: { ...authHeaders(), ...options.headers },
+  });
+  if (res.status === 401) {
+    removeToken();
+    window.location.href = "/login";
+  }
+  return res;
+}
+
 export async function getLiveRecords(): Promise<LiveRecord[]> {
-  const res = await fetch(API_BASE);
+  const res = await authFetch(API_BASE);
   if (!res.ok) return [];
   return res.json();
 }
@@ -11,7 +24,7 @@ export async function getLiveRecords(): Promise<LiveRecord[]> {
 export async function getLiveRecord(
   id: string
 ): Promise<LiveRecord | undefined> {
-  const res = await fetch(`${API_BASE}/${id}`);
+  const res = await authFetch(`${API_BASE}/${id}`);
   if (!res.ok) return undefined;
   return res.json();
 }
@@ -35,7 +48,7 @@ export async function createLiveRecord(
   },
   photoFiles: File[]
 ): Promise<LiveRecord> {
-  const res = await fetch(API_BASE, {
+  const res = await authFetch(API_BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -49,7 +62,7 @@ export async function createLiveRecord(
   if (photoFiles.length > 0) {
     const formData = new FormData();
     photoFiles.forEach((file) => formData.append("photos", file));
-    await fetch(`${API_BASE}/${record.id}/photos`, {
+    await authFetch(`${API_BASE}/${record.id}/photos`, {
       method: "POST",
       body: formData,
     });
@@ -78,7 +91,7 @@ export async function updateLiveRecord(
   },
   newPhotoFiles: File[]
 ): Promise<LiveRecord> {
-  const res = await fetch(`${API_BASE}/${id}`, {
+  const res = await authFetch(`${API_BASE}/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -92,7 +105,7 @@ export async function updateLiveRecord(
   if (newPhotoFiles.length > 0) {
     const formData = new FormData();
     newPhotoFiles.forEach((file) => formData.append("photos", file));
-    await fetch(`${API_BASE}/${record.id}/photos`, {
+    await authFetch(`${API_BASE}/${record.id}/photos`, {
       method: "POST",
       body: formData,
     });
@@ -102,5 +115,5 @@ export async function updateLiveRecord(
 }
 
 export async function deleteLiveRecord(id: string): Promise<void> {
-  await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+  await authFetch(`${API_BASE}/${id}`, { method: "DELETE" });
 }
