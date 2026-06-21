@@ -13,7 +13,7 @@ import {
   Request,
   Res,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { LivesService } from './lives.service';
@@ -80,10 +80,10 @@ export class LivesController {
     return this.livesService.addPhotos(id, files, req.user.id);
   }
 
-  @Get('photos/*')
-  async getPhoto(@Param() params: any, @Res() res: Response) {
-    const key = params[0];
-    const { body, contentType } = await this.livesService.getPhoto(key);
+  @Get('photos/{*key}')
+  async getPhoto(@Param('key') key: string | string[], @Res() res: Response) {
+    const resolvedKey = Array.isArray(key) ? key.join('/') : key;
+    const { body, contentType } = await this.livesService.getPhoto(resolvedKey);
     res.set('Content-Type', contentType);
     res.set('Cache-Control', 'public, max-age=86400');
     (body as any).pipe(res);

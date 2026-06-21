@@ -30,9 +30,19 @@ export class LivesService {
     @InjectRepository(Photo)
     private readonly photoRepo: Repository<Photo>,
   ) {
-    this.region = process.env.AWS_REGION || 'ap-northeast-1';
+    this.region = process.env.AWS_REGION || 'us-east-1';
     this.bucket = process.env.S3_BUCKET || 'livekun-diary-dev';
-    this.s3 = new S3Client({ region: this.region });
+
+    const s3Config: any = { region: this.region };
+    if (process.env.S3_ENDPOINT) {
+      s3Config.endpoint = process.env.S3_ENDPOINT;
+      s3Config.forcePathStyle = true;
+      s3Config.credentials = {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'livekun',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'livekun123',
+      };
+    }
+    this.s3 = new S3Client(s3Config);
   }
 
   async findAll(userId: string): Promise<Live[]> {

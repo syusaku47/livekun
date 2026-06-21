@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: livekun-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: livekun
+      POSTGRES_PASSWORD: livekun
+      POSTGRES_DB: livekun
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U livekun"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: livekun-backend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: livekun
+      DB_PASSWORD: livekun
+      DB_NAME: livekun
+      NODE_ENV: production
+      S3_BUCKET: livekun-diary-dev
+      AWS_REGION: ap-northeast-1
+      JWT_SECRET: livekun-prod-secret-2026
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: livekun-frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:
