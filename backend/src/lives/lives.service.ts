@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
 import { Live } from './entities/live.entity';
@@ -147,11 +147,9 @@ export class LivesService {
         }),
       );
 
-      const s3Url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-
       const photo = this.photoRepo.create({
         filename: file.originalname,
-        path: s3Url,
+        path: key,
         mimetype: file.mimetype,
         size: file.size,
         live,
@@ -160,5 +158,25 @@ export class LivesService {
     }
 
     return this.photoRepo.save(photos);
+  }
+
+  async getPhoto(key: string): Promise<{ body: any; contentType: string }> {
+    // 既存データのS3フルURLからキーを抽出
+    let s3Key = key;
+    const s3UrlPrefix = `https://${this.bucket}.s3.${this.region}.amazonaws.com/`;
+    if (s3Key.startsWith(s3UrlPrefix)) {
+      s3Key = s3Key.slice(s3UrlPrefix.length);
+    }
+
+    const result = await this.s3.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: s3Key,
+      }),
+    );
+    return {
+      body: result.Body,
+      contentType: result.ContentType || 'application/octet-stream',
+    };
   }
 }

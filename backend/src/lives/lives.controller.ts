@@ -11,7 +11,9 @@ import {
   ParseUUIDPipe,
   UseGuards,
   Request,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { LivesService } from './lives.service';
@@ -19,16 +21,17 @@ import { CreateLiveDto } from './dto/create-live.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('api/lives')
-@UseGuards(JwtAuthGuard)
 export class LivesController {
   constructor(private readonly livesService: LivesService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(@Request() req: any) {
     return this.livesService.findAll(req.user.id);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
@@ -37,11 +40,13 @@ export class LivesController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateLiveDto, @Request() req: any) {
     return this.livesService.create(dto, req.user.id);
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateLiveDto,
@@ -51,6 +56,7 @@ export class LivesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
@@ -59,6 +65,7 @@ export class LivesController {
   }
 
   @Post(':id/photos')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('photos', 100, {
       storage: memoryStorage(),
@@ -71,5 +78,14 @@ export class LivesController {
     @Request() req: any,
   ) {
     return this.livesService.addPhotos(id, files, req.user.id);
+  }
+
+  @Get('photos/*')
+  async getPhoto(@Param() params: any, @Res() res: Response) {
+    const key = params[0];
+    const { body, contentType } = await this.livesService.getPhoto(key);
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    (body as any).pipe(res);
   }
 }

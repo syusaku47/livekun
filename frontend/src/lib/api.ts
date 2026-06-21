@@ -74,11 +74,10 @@ export async function uploadPhotos(id: string, files: File[]): Promise<void> {
 }
 
 export function getPhotoUrl(photo: { path: string }): string {
-  // S3のURLはそのまま使用、ローカルパスの場合はAPI_BASEを付与
   if (photo.path.startsWith("http")) {
-    return photo.path;
+    return `${API_BASE}/api/lives/photos/${encodeURIComponent(photo.path)}`;
   }
-  return `${API_BASE}/${photo.path}`;
+  return `${API_BASE}/api/lives/photos/${photo.path}`;
 }
 
 // Auth API
