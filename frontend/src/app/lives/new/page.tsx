@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LiveRecord, SetlistItem, NearbyFacility } from "@/types/live";
-import { saveLiveRecord } from "@/lib/storage";
+import { SetlistItem, NearbyFacility } from "@/types/live";
+import { createLiveRecord, uploadPhotos } from "@/lib/api";
 
 export default function NewLivePage() {
   const router = useRouter();
@@ -15,28 +15,31 @@ export default function NewLivePage() {
   const [endTime, setEndTime] = useState("");
   const [googleMapUrl, setGoogleMapUrl] = useState("");
   const [impression, setImpression] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [setlist, setSetlist] = useState<SetlistItem[]>([
     { order: 1, title: "", type: "song" },
   ]);
   const [facilities, setFacilities] = useState<NearbyFacility[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const maxFiles = 100 - photos.length;
-    const filesToProcess = Array.from(files).slice(0, maxFiles);
+    const maxFiles = 100 - photoFiles.length;
+    const newFiles = Array.from(files).slice(0, maxFiles);
 
-    filesToProcess.forEach((file) => {
+    newFiles.forEach((file) => {
       if (file.size > 100 * 1024 * 1024) {
         alert(`${file.name} は100MBを超えています`);
         return;
       }
+      setPhotoFiles((prev) => [...prev, file]);
       const reader = new FileReader();
       reader.onload = (ev) => {
         if (ev.target?.result) {
-          setPhotos((prev) => [...prev, ev.target!.result as string]);
+          setPhotoPreviews((prev) => [...prev, ev.target!.result as string]);
         }
       };
       reader.readAsDataURL(file);
@@ -44,7 +47,8 @@ export default function NewLivePage() {
   };
 
   const removePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addSetlistItem = (type: "song" | "mc" | "encore") => {
@@ -89,7 +93,7 @@ export default function NewLivePage() {
     setFacilities((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!artistName || !performanceDate || !venueName) {
@@ -97,26 +101,32 @@ export default function NewLivePage() {
       return;
     }
 
-    const now = new Date().toISOString();
-    const record: LiveRecord = {
-      id: crypto.randomUUID(),
-      artistName,
-      performanceDate,
-      venueName,
-      tourName,
-      startTime,
-      endTime,
-      photos,
-      nearbyFacilities: facilities,
-      googleMapUrl,
-      impression,
-      setlist: setlist.filter((s) => s.title.trim() !== ""),
-      createdAt: now,
-      updatedAt: now,
-    };
+    setSubmitting(true);
+    try {
+      const record = await createLiveRecord({
+        artistName,
+        performanceDate,
+        venueName,
+        tourName,
+        startTime,
+        endTime,
+        googleMapUrl,
+        impression,
+        setlist: setlist.filter((s) => s.title.trim() !== ""),
+        nearbyFacilities: facilities.filter((f) => f.name.trim() !== ""),
+      });
 
-    saveLiveRecord(record);
-    router.push(`/lives/${record.id}`);
+      if (photoFiles.length > 0) {
+        await uploadPhotos(record.id, photoFiles);
+      }
+
+      router.push(`/lives/${record.id}`);
+    } catch (err) {
+      console.error("Failed to create record:", err);
+      alert("保存に失敗しました。バックエンドサーバーが起動しているか確認してください。");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const setlistTypeLabel = (type: string) => {
@@ -127,17 +137,6 @@ export default function NewLivePage() {
         return "アンコール";
       default:
         return "曲";
-    }
-  };
-
-  const facilityLabel = (cat: string) => {
-    switch (cat) {
-      case "izakaya":
-        return "居酒屋";
-      case "cafe":
-        return "カフェ";
-      default:
-        return "その他";
     }
   };
 
@@ -253,9 +252,9 @@ export default function NewLivePage() {
             onChange={handlePhotoUpload}
             className="mb-4"
           />
-          {photos.length > 0 && (
+          {photoPreviews.length > 0 && (
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-              {photos.map((photo, i) => (
+              {photoPreviews.map((photo, i) => (
                 <div key={i} className="relative group">
                   <img
                     src={photo}
@@ -274,7 +273,7 @@ export default function NewLivePage() {
             </div>
           )}
           <p className="text-sm text-gray-400 mt-2">
-            {photos.length}/100 枚アップロード済み
+            {photoFiles.length}/100 枚選択済み
           </p>
         </section>
 
@@ -410,9 +409,10 @@ export default function NewLivePage() {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-800 transition-colors"
+            disabled={submitting}
+            className="px-6 py-3 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-800 transition-colors disabled:opacity-50"
           >
-            記録を保存
+            {submitting ? "保存中..." : "記録を保存"}
           </button>
         </div>
       </form>
