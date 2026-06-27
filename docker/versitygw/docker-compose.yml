@@ -1,0 +1,16 @@
+services:
+  versitygw:
+    image: versity/versitygw:latest
+    container_name: livekun-s3
+    environment:
+      ROOT_ACCESS_KEY_ID: livekun
+      ROOT_SECRET_ACCESS_KEY: livekun123
+      VGW_PORT: ":7070"
+    command: ["posix", "/data"]
+    ports:
+      - "7070:7070"
+    volumes:
+      - s3_data:/data
+
+volumes:
+  s3_data:
