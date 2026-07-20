@@ -5,15 +5,23 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { SetlistItem } from './setlist-item.entity';
 import { NearbyFacility } from './nearby-facility.entity';
 import { Photo } from './photo.entity';
+import { User } from '../../auth/entities/user.entity';
 
 @Entity('lives')
 export class Live {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @ManyToOne(() => User, (user) => user.lives, {
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
+  user: User;
 
   @Column()
   artistName: string;

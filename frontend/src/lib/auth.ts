@@ -1,50 +1,64 @@
-const TOKEN_KEY = "livekun_token";
+import type { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "ユーザー名", type: "text" },
+        password: { label: "パスワード", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) return null;
 
-export function removeToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: credentials.username,
+            password: credentials.password,
+          }),
+        });
 
-export function authHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+        if (!res.ok) return null;
 
-export async function login(
-  username: string,
-  password: string
-): Promise<void> {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
-    throw new Error("Login failed");
-  }
-  const data = await res.json();
-  setToken(data.access_token);
-}
-
-export async function register(
-  username: string,
-  password: string
-): Promise<void> {
-  const res = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(body);
-  }
-}
+        const data = await res.json();
+        return {
+          id: data.user.id,
+          name: data.user.username,
+          role: data.user.role,
+          accessToken: data.accessToken,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
+        token.accessToken = (user as any).accessToken;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).role = token.role;
+        (session.user as any).accessToken = token.accessToken;
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/login",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
+  },
+  secret: process.env.NEXTAUTH_SECRET || "livekun-nextauth-secret",
+};

@@ -10,73 +10,82 @@ import {
   UploadedFiles,
   ParseUUIDPipe,
   UseGuards,
+  Request,
+  Res,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage, memoryStorage } from 'multer';
-import { v4 as uuidv4 } from 'uuid';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { LivesService } from './lives.service';
 import { CreateLiveDto } from './dto/create-live.dto';
-
-const useS3 = !!process.env.S3_BUCKET;
-
-const storageConfig = useS3
-  ? { storage: memoryStorage() }
-  : {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const ext = extname(file.originalname);
-          cb(null, `${uuidv4()}${ext}`);
-        },
-      }),
-    };
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('api/lives')
-@UseGuards(JwtAuthGuard)
 export class LivesController {
   constructor(private readonly livesService: LivesService) {}
 
   @Get()
-  findAll() {
-    return this.livesService.findAll();
+  @UseGuards(JwtAuthGuard)
+  findAll(@Request() req: any) {
+    return this.livesService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.livesService.findOne(id);
+  @UseGuards(JwtAuthGuard)
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.livesService.findOne(id, req.user.id);
   }
 
   @Post()
-  create(@Body() dto: CreateLiveDto) {
-    return this.livesService.create(dto);
+  @UseGuards(JwtAuthGuard)
+  create(@Body() dto: CreateLiveDto, @Request() req: any) {
+    return this.livesService.create(dto, req.user.id);
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateLiveDto,
+    @Request() req: any,
   ) {
-    return this.livesService.update(id, dto);
+    return this.livesService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.livesService.remove(id);
+  @UseGuards(JwtAuthGuard)
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.livesService.remove(id, req.user.id);
   }
 
   @Post(':id/photos')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('photos', 100, {
-      ...storageConfig,
+      storage: memoryStorage(),
       limits: { fileSize: 100 * 1024 * 1024 },
     }),
   )
   uploadPhotos(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFiles() files: Express.Multer.File[],
+    @Request() req: any,
   ) {
-    return this.livesService.addPhotos(id, files);
+    return this.livesService.addPhotos(id, files, req.user.id);
+  }
+
+  @Get('photos/{*key}')
+  async getPhoto(@Param('key') key: string | string[], @Res() res: Response) {
+    const resolvedKey = Array.isArray(key) ? key.join('/') : key;
+    const { body, contentType } = await this.livesService.getPhoto(resolvedKey);
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    (body as any).pipe(res);
   }
 }

@@ -1,0 +1,543 @@
+{
+ "Resources": {
+  "LivekunVpc7A293477": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/16",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/Resource"
+   }
+  },
+  "LivekunVpcPublicSubnet1Subnet9FB5A01F": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1a",
+    "CidrBlock": "10.0.0.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc/PublicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet1/Subnet"
+   }
+  },
+  "LivekunVpcPublicSubnet1RouteTableE249D4A4": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc/PublicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet1/RouteTable"
+   }
+  },
+  "LivekunVpcPublicSubnet1RouteTableAssociation7086E06C": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "LivekunVpcPublicSubnet1RouteTableE249D4A4"
+    },
+    "SubnetId": {
+     "Ref": "LivekunVpcPublicSubnet1Subnet9FB5A01F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet1/RouteTableAssociation"
+   }
+  },
+  "LivekunVpcPublicSubnet1DefaultRouteF20B4F68": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "LivekunVpcIGW9310521B"
+    },
+    "RouteTableId": {
+     "Ref": "LivekunVpcPublicSubnet1RouteTableE249D4A4"
+    }
+   },
+   "DependsOn": [
+    "LivekunVpcVPCGW0D84EC3C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet1/DefaultRoute"
+   }
+  },
+  "LivekunVpcPublicSubnet2SubnetEA3FEFEB": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1c",
+    "CidrBlock": "10.0.1.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc/PublicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet2/Subnet"
+   }
+  },
+  "LivekunVpcPublicSubnet2RouteTableE0148F59": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc/PublicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet2/RouteTable"
+   }
+  },
+  "LivekunVpcPublicSubnet2RouteTableAssociation2C5FF30F": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "LivekunVpcPublicSubnet2RouteTableE0148F59"
+    },
+    "SubnetId": {
+     "Ref": "LivekunVpcPublicSubnet2SubnetEA3FEFEB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet2/RouteTableAssociation"
+   }
+  },
+  "LivekunVpcPublicSubnet2DefaultRoute55CEDC37": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "LivekunVpcIGW9310521B"
+    },
+    "RouteTableId": {
+     "Ref": "LivekunVpcPublicSubnet2RouteTableE0148F59"
+    }
+   },
+   "DependsOn": [
+    "LivekunVpcVPCGW0D84EC3C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/PublicSubnet2/DefaultRoute"
+   }
+  },
+  "LivekunVpcIGW9310521B": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunVpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/IGW"
+   }
+  },
+  "LivekunVpcVPCGW0D84EC3C": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "InternetGatewayId": {
+     "Ref": "LivekunVpcIGW9310521B"
+    },
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/VPCGW"
+   }
+  },
+  "LivekunVpcRestrictDefaultSecurityGroupCustomResource911BB170": {
+   "Type": "Custom::VpcRestrictDefaultSG",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+      "Arn"
+     ]
+    },
+    "DefaultSecurityGroupId": {
+     "Fn::GetAtt": [
+      "LivekunVpc7A293477",
+      "DefaultSecurityGroup"
+     ]
+    },
+    "Account": "782514561967"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunVpc/RestrictDefaultSecurityGroupCustomResource/Default"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+         ],
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:ec2:ap-northeast-1:782514561967:security-group/",
+             {
+              "Fn::GetAtt": [
+               "LivekunVpc7A293477",
+               "DefaultSecurityGroup"
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-782514561967-ap-northeast-1",
+     "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group"
+   },
+   "DependsOn": [
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093",
+    "aws:asset:property": "Code"
+   }
+  },
+  "LivekunSGCD2A7317": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for Livekun EC2",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTP",
+      "FromPort": 80,
+      "IpProtocol": "tcp",
+      "ToPort": 80
+     },
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow SSH",
+      "FromPort": 22,
+      "IpProtocol": "tcp",
+      "ToPort": 22
+     }
+    ],
+    "VpcId": {
+     "Ref": "LivekunVpc7A293477"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunSG/Resource"
+   }
+  },
+  "LivekunEc2Role36A5DB62": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunEc2Role/Resource"
+   }
+  },
+  "LivekunInstanceInstanceProfile6B1F109A": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "LivekunEc2Role36A5DB62"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunInstance/InstanceProfile"
+   }
+  },
+  "LivekunInstance7044C349": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1a",
+    "BlockDeviceMappings": [
+     {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+       "VolumeSize": 20,
+       "VolumeType": "gp3"
+      }
+     }
+    ],
+    "IamInstanceProfile": {
+     "Ref": "LivekunInstanceInstanceProfile6B1F109A"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "t3.small",
+    "KeyName": {
+     "Ref": "LivekunKeyPairCA523255"
+    },
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "LivekunSGCD2A7317",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetId": {
+     "Ref": "LivekunVpcPublicSubnet1Subnet9FB5A01F"
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "LivekunStack/LivekunInstance"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash\n#!/bin/bash\nset -e\nyum update -y\nyum install -y docker git\nsystemctl start docker\nsystemctl enable docker\nusermod -a -G docker ec2-user\nDOCKER_COMPOSE_VERSION=v2.29.1\ncurl -L \"https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose\nchmod +x /usr/local/bin/docker-compose\ncd /home/ec2-user\ngit clone https://github.com/syusaku47/livekun.git || true\ncd livekun\ndocker-compose -f docker-compose.prod.yml up -d --build"
+    }
+   },
+   "DependsOn": [
+    "LivekunEc2Role36A5DB62"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunInstance/Resource"
+   }
+  },
+  "LivekunKeyPairCA523255": {
+   "Type": "AWS::EC2::KeyPair",
+   "Properties": {
+    "KeyFormat": "pem",
+    "KeyName": "livekun-keypair",
+    "KeyType": "rsa"
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/LivekunKeyPair/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/81VTW/bMAz9LdOxUD0sQIshNzcFCmMfMZKihwXBQMtsylamPH04y4z890GxnKRDrwN6CvkkUu8xT/Ikm1x9zj59gK27VPXLpaYq65ce1IuErfvZo5pk/UOrVr1o4Hf+x4mpuBBSMPg78LiF3Yi4UDH6meFH2gQLngyL6aoXimr7DdzLsbDBVxX3uzYCZag0KbFf79dy9sgP5UwO0PKwa9UL6IA0VKTJ734YHrt0rSrqFMezbrRR42ENtEOTop3zVwisnsTU24BSUNtdz/7ZDs7Rhou2u87r2qJzc55ZTFLEhdjLd8Li3RB5HywGywxGidHCBI/3UGk84Scsd84oOjQ4bo5BwR4t4+jr5MKU5d6DemqQvVyiCpb87s6a0K76qDVRrdEpS+2RmhSgtdnmWs+Dr0zgehB6GFxdF7yJehZB43BTgAvWxDggw0iUYUYVW44XLTD9CpjGezCDuBDr/9JzmOu5Xlmw88AKXwnv2nRNnZj2b99rKShVpoXBCuqJGIsGNsdH4fy0hFmjx+Xg0N6Ch5RW0Si32JFCd9BbH+Lvp0emMzqkZHxbRgnyC+5KILtKBkrpXhI0Wb8wOooE50KD9c0uKmstsaIWdK6UCexPFg0NxoJcnflSNMCwwbo0mhQlgufYLrf8illscc6wtOaRNO73coHOBKtQzoLzphnTVfybDpVvr5fWdFSjvQGHMncO/dLDhngTa0qw0KBHG5N58G3we8mmxuzZfewmV1n8MDw7oksb2FOD2WL4/QvTQP/8NQYAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "LivekunStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Outputs": {
+  "InstancePublicIp": {
+   "Description": "EC2 Public IP",
+   "Value": {
+    "Fn::GetAtt": [
+     "LivekunInstance7044C349",
+     "PublicIp"
+    ]
+   }
+  },
+  "InstancePublicDnsName": {
+   "Description": "EC2 Public DNS",
+   "Value": {
+    "Fn::GetAtt": [
+     "LivekunInstance7044C349",
+     "PublicDnsName"
+    ]
+   }
+  },
+  "SshCommand": {
+   "Description": "SSH Command",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "ssh -i livekun-keypair.pem ec2-user@",
+      {
+       "Fn::GetAtt": [
+        "LivekunInstance7044C349",
+        "PublicIp"
+       ]
+      }
+     ]
+    ]
+   }
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

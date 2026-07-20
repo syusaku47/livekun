@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "@/components/AuthProvider";
-import Header from "@/components/Header";
+import AuthProvider from "@/lib/session-provider";
+import Header from "@/components/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ライブくん - ライブ参戦記録",
   description: "ライブ・コンサートの参戦記録を残すアプリ",
+  manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#7e22ce",
 };
 
 export default function RootLayout({

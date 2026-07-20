@@ -4,25 +4,32 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LiveRecord } from "@/types/live";
-import { getLiveRecord, deleteLiveRecord } from "@/lib/storage";
+import { getLiveRecord, deleteLiveRecord, getPhotoUrl } from "@/lib/api";
 
 export default function LiveDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [record, setRecord] = useState<LiveRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const id = params.id as string;
-    getLiveRecord(id).then((data) => {
-      if (data) setRecord(data);
-    });
+    getLiveRecord(id)
+      .then((data) => setRecord(data))
+      .catch(() => setRecord(null))
+      .finally(() => setLoading(false));
   }, [params.id]);
 
   const handleDelete = async () => {
     if (!record) return;
     if (confirm("この記録を削除しますか？")) {
-      await deleteLiveRecord(record.id);
-      router.push("/");
+      try {
+        await deleteLiveRecord(record.id);
+        router.push("/");
+      } catch (err) {
+        console.error("Failed to delete:", err);
+        alert("削除に失敗しました");
+      }
     }
   };
 
@@ -61,6 +68,14 @@ export default function LiveDetailPage() {
 
   const appleSearchUrl = (song: string, artist: string) =>
     `https://music.apple.com/search?term=${encodeURIComponent(song + " " + artist)}`;
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-gray-500 text-lg">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!record) {
     return (
@@ -118,7 +133,7 @@ export default function LiveDetailPage() {
             {record.photos.map((photo) => (
               <img
                 key={photo.id}
-                src={photo.path.startsWith("http") ? photo.path : `/uploads/${photo.filename}`}
+                src={getPhotoUrl(photo)}
                 alt={photo.filename}
                 className="w-full h-40 object-cover rounded-lg"
               />
@@ -135,7 +150,7 @@ export default function LiveDetailPage() {
           </h2>
           <ol className="space-y-2">
             {record.setlist.map((item, i) => (
-              <li key={i} className="flex items-center gap-3">
+              <li key={item.id || i} className="flex items-center gap-3">
                 <span className="text-sm text-gray-400 w-8 text-right">
                   {item.order}.
                 </span>
@@ -172,7 +187,7 @@ export default function LiveDetailPage() {
           <div className="space-y-2">
             {record.nearbyFacilities.map((f, i) => (
               <div
-                key={i}
+                key={f.id || i}
                 className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
               >
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
